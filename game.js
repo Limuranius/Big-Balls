@@ -1,9 +1,16 @@
-let app = new PIXI.Application({
+const app = new PIXI.Application({
 	resizeTo: window,
 });
 document.body.appendChild(app.view);
 
 const G = 6.67  // Гравитационная постоянная (Нахрена она нужна?)
+
+
+function clearStage() {
+	for (let i = app.stage.children.length; i >= 0; i--) {
+		app.stage.removeChild(app.stage.children[i]);
+	}
+}
 
 
 function randomFloatBetween(a, b) {
@@ -51,6 +58,28 @@ function createCircle(options) {
 	circle.drawCircle(defOpt.x, defOpt.y, defOpt.R);
 	circle.endFill();
 	return circle;
+}
+
+
+function createRectangle(options) {
+	let defOpt = {  // defaultOptions
+		x: 0, 
+		y: 0, 
+		width: 100,
+		height: 20,
+		lineWidth: 1,
+		lineColor: 0xffffff,
+		lineAlpha: 1, 
+		fillColor: 0x000000,
+	}
+	Object.assign(defOpt, options);  // Заменяем аргументы по умолчанию на те, которые ввели
+
+	let rect = new PIXI.Graphics();
+	rect.lineStyle(defOpt.lineWidth, defOpt.lineColor, defOpt.lineAlpha);
+	rect.beginFill(defOpt.fillColor);
+	rect.drawRect(defOpt.x, defOpt.y, defOpt.width, defOpt.height);
+	rect.endFill();
+	return rect;
 }
 
 
@@ -328,12 +357,62 @@ class Vector {
 
 
 
+
+class Button {
+	constructor(x, y, text, event) {
+		this.x = x;
+		this.y = y;
+		this.text = new PIXI.Text(text);
+		this.textureMouseOver = createRectangle({
+			fillColor: 0xff0000,
+			width: 300,
+			height: 100,
+		});
+		this.defaultTexture = createRectangle({
+			fillColor: 0xccccff,
+			width: 150,
+			height: 50,
+		});
+		this.texture = this.defaultTexture;
+
+		this.button = new PIXI.Container();
+		this.button.addChild(this.texture);
+		this.button.addChild(this.text);
+		//this.text.anchor.set(0.5, 0.5);
+		this.text.position.set(this.button.width / 2 - this.text.width / 2, this.button.height / 2 - this.text.height / 2);
+
+		this.button.interactive = true;
+		this.button.buttonMode = true;
+
+		this.button
+			.on('pointerdown', event)
+			.on('pointerover', this.onButtonOver)
+			.on('pointerout', this.onButtonOut);
+
+		app.stage.addChild(this.button);
+		this.button.position.set(this.x, this.y);
+	}
+
+	onButtonOver() {
+		this.texture = this.textureMouseOver;
+	}
+
+	onButtonOut() {
+		this.texture = this.defaultTexture;
+	}
+}
+
+
+
+
 function case1() {
+	clearStage();
 	new Planet(100, 100, 0, 0, 100);
 	new Planet(800, 800, 0, 0, 100);
 }
 
 function case2() {
+	clearStage();
 	new Planet(500, 500, 0, 0, 100);
 	setInterval(func, 1)
 	function func() {
@@ -342,11 +421,13 @@ function case2() {
 }
 
 function case3() {
+	clearStage();
 	new Ball(200, 350, 2, 0, 100, 50);
 	new Ball(600, 400, 0, 0, 100, 50);
 }
 
 function case4() {
+	clearStage();
 	new Ball(200, 400, 2, 0, 500, 50);
 
 	new Ball(1000, 400, 0, 0, 100, 50);
@@ -360,4 +441,9 @@ function case4() {
 }
 
 
-case4();
+
+new Button(100, 500, "Planets", case1);
+new Button(100, 600, "Asteroids", case2);
+new Button(100, 700, "Collision", case3);
+new Button(100, 800, "Billiard", case4);
+
