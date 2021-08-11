@@ -4,6 +4,9 @@ const app = new PIXI.Application({
 document.body.appendChild(app.view);
 
 const G = 6.67  // Гравитационная постоянная (Нахрена она нужна?)
+const PLANET_PLANET_COLLISION = false;  // true - планеты будут отталкиваться друг от друга
+const ROCKET_PLANET_COLLISION = false;  // true - ракеты будут отталкиваться от планет
+const ROCKET_ROCKET_COLLISION = false;  //	true - ракеты будут отталкиваться друг от друга
 
 
 function clearStage() {
@@ -230,11 +233,11 @@ class CircleMovingObject extends MovingObject {
 
 
 class Planet extends CircleMovingObject {
-	static planets = [];  // Массив, содержащий все созданные планеты
+	static allObjects = [];  // Массив, содержащий все созданные планеты
 
 	constructor(x, y, vx, vy, mass, R) {
 		super(x, y, vx, vy, mass, R);
-		Planet.planets.push(this);
+		Planet.allObjects.push(this);
 	}
 
 	createSprite() {
@@ -261,8 +264,11 @@ class Planet extends CircleMovingObject {
 	}
 
 	move() {
-		this.calculateGravityWithOtherBodies(Planet.planets);
-		this.showInfo();	
+		this.calculateGravityWithOtherBodies(Planet.allObjects);
+		this.showInfo();
+		if (PLANET_PLANET_COLLISION) {
+			this.checkAndDoCollision(Planet.allObjects);
+		}
 		super.move();
 	}
 
@@ -275,8 +281,11 @@ class Planet extends CircleMovingObject {
 
 
 class Rocket extends CircleMovingObject {
+	static allObjects = []
+
 	constructor(x, y, vx, vy) {
 		super(x, y, vx, vy, 1, 5);
+		Rocket.rockets.push(this);
 	}
 
 	createSprite() {
@@ -288,8 +297,14 @@ class Rocket extends CircleMovingObject {
 	}
 
 	move() {
-		this.calculateGravityWithOtherBodies(Planet.planets);
+		this.calculateGravityWithOtherBodies(Planet.allObjects);
 		super.move();
+		if (ROCKET_ROCKET_COLLISION) {
+			this.checkAndDoCollision(Rocket.allObjects);
+		}
+		if (ROCKET_PLANET_COLLISION) {
+			this.checkAndDoCollision(Planet.allObjects);
+		}
 		//this.bounceOffEdges();
 	}
 }
@@ -299,11 +314,11 @@ class Rocket extends CircleMovingObject {
 
 
 class Ball extends CircleMovingObject {
-	static balls = [];
+	static allObjects = [];
 
 	constructor(x, y, vx, vy, mass, R) {
 		super(x, y, vx, vy, mass, R);
-		Ball.balls.push(this);
+		Ball.allObjects.push(this);
 	}
 
 	createSprite() {
@@ -314,7 +329,7 @@ class Ball extends CircleMovingObject {
 	}
 
 	move() {
-		this.checkAndDoCollision(Ball.balls);
+		this.checkAndDoCollision(Ball.allObjects);
 		super.move();
 	}
 }
@@ -447,9 +462,17 @@ function case5() {
 	}
 }
 
-new Button(100, 500, "Planets", case1);
-new Button(100, 600, "Asteroids", case2);
-new Button(100, 700, "Collision", case3);
-new Button(100, 800, "Billiard", case4);
-new Button(100, 900, "Random", case5);
+function case6() {
+	clearStage();
+	new Planet(900, 300, 2, 0, 500, 100);
+	new Planet(900, 700, -2, 0, 500, 100);
+	new Rocket(900, 500, 0, 0);
+}
+
+new Button(100, 200, "Planets", case1);
+new Button(100, 300, "Asteroids", case2);
+new Button(100, 400, "Collision", case3);
+new Button(100, 500, "Billiard", case4);
+new Button(100, 600, "Random", case5);
+new Button(100, 700, "Orbitals", case6);
 
