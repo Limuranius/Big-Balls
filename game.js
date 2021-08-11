@@ -85,34 +85,14 @@ function createRectangle(options) {
 
 
 
-class Planet {
-	static planets = [];  // Массив, содержащий все созданные планеты
 
+class MovingObject {
 	constructor(x, y, vx, vy, mass) {
-		this.R = mass
-		this.sprite = createCircle({
-			R: this.R,
-			lineWidth: 3
-		});
-		app.stage.addChild(this.sprite);
-
-
-		this.textStyle = new PIXI.TextStyle({
-			fontFamily: "Arial",
-			fontSize: 16,
-  			fill: "white",
-		})
-		this.infoText = new PIXI.Text("", this.textStyle); 
-		app.stage.addChild(this.infoText);
-
-
-		this.setPos(x, y);
+		this.x = x;
+		this.y = y;
 		this.vx = vx;
 		this.vy = vy;
 		this.mass = mass;
-		Planet.planets.push(this);
-
-		app.ticker.add(this.move.bind(this));
 	}
 
 	setPos(x, y) {
@@ -120,61 +100,6 @@ class Planet {
 		this.sprite.y = y;
 		this.x = x;
 		this.y = y;
-		this.infoText.position.set(x + this.R, y - this.R);
-	}
-
-	move() {
-		this.calculateGravityWithOtherPlanets();
-		this.setPos(this.x + this.vx, this.y + this.vy);
-		this.showInfo();
-	}
-
-	calculateGravityWithOtherPlanets() {
-		for (let planet of Planet.planets) {
-			if (planet != this) {
-				let dx = planet.x - this.x;
-				let dy = planet.y - this.y;
-				let distSquared = Math.pow(dx, 2) + Math.pow(dy, 2);
-				let force = G * this.mass * planet.mass / distSquared;
-				let angle = Math.atan2(dy, dx);
-				let acceleration = force / this.mass;
-				let ax = acceleration * Math.cos(angle);
-				let ay = acceleration * Math.sin(angle);
-
-				this.vx += ax;
-				this.vy += ay;
-			}
-		}
-	}
-
-	showInfo() {
-		this.infoText.text = `Vx: ${this.vx}\nVy: ${this.vy}`
-	}
-}
-
-
-
-
-class Rocket {
-	constructor(x, y, vx, vy) {
-		this.sprite = createCircle({
-			R: 5,
-			fillColor: getRandomColor(),
-			lineWidth: 0,
-		})
-		app.stage.addChild(this.sprite);
-
-		this.setPos(x, y);
-		this.vx = vx;
-		this.vy = vy;
-
-		app.ticker.add(this.move.bind(this));
-	}
-
-	setPos(x, y) {
-		this.x = x;
-		this.y = y;
-		this.sprite.position.set(x, y);
 	}
 
 	setX(x) {
@@ -188,25 +113,11 @@ class Rocket {
 	}
 
 	move() {
-		this.calculateGravityWithOtherPlanets();
 		this.setPos(this.x + this.vx, this.y + this.vy);
-		//this.bounceOffEdges();
 	}
 
-	calculateGravityWithOtherPlanets() {
-		for (let planet of Planet.planets) {
-			let dx = planet.x - this.x;
-			let dy = planet.y - this.y;
-			let distSquared = Math.pow(dx, 2) + Math.pow(dy, 2);
-			let force = G * planet.mass / distSquared;
-			let angle = Math.atan2(dy, dx);
-			let acceleration = force;
-			let ax = acceleration * Math.cos(angle);
-			let ay = acceleration * Math.sin(angle);
-
-			this.vx += ax;
-			this.vy += ay;
-		}
+	moveWithoutChecking() {
+		this.setPos(this.x + this.vx, this.y + this.vy);
 	}
 
 	bounceOffEdges() {
@@ -228,72 +139,62 @@ class Rocket {
 			this.vy = -this.vy;
 		}
 	}
+
+	calculateGravityWithOtherBodies(classListOfBodies) {
+		for (let body of classListOfBodies) {
+			if (body != this) {
+				let dx = body.x - this.x;
+				let dy = body.y - this.y;
+				let distSquared = Math.pow(dx, 2) + Math.pow(dy, 2);
+				let force = G * this.mass * body.mass / distSquared;
+				let angle = Math.atan2(dy, dx);
+				let acceleration = force / this.mass;
+				let ax = acceleration * Math.cos(angle);
+				let ay = acceleration * Math.sin(angle);
+				this.vx += ax;
+				this.vy += ay;
+			}
+		}
+	}	
 }
 
 
 
 
 
-class Ball {
-	static balls = [];
-
+class CircleMovingObject extends MovingObject {
 	constructor(x, y, vx, vy, mass, R) {
-		this.R = R
-		this.sprite = createCircle({
-			R: this.R,
-			lineWidth: 1
-		});
+		super(x, y, vx, vy, mass);
+		this.R = R;
+		this.createSprite();
 		app.stage.addChild(this.sprite);
-
-		this.setPos(x, y);
-		this.vx = vx;
-		this.vy = vy;
-		this.mass = mass;
-		Ball.balls.push(this);
-
 		app.ticker.add(this.move.bind(this));
 	}
 
-	setPos(x, y) {
-		this.sprite.x = x;
-		this.sprite.y = y;
-		this.x = x;
-		this.y = y;
-	}
-
-	move() {
-		this.checkAndDoCollision();
-		this.setPos(this.x + this.vx, this.y + this.vy);
-	}
-
-	moveWithoutChecking() {
-		this.setPos(this.x + this.vx, this.y + this.vy);
-	}
-
-	getOneCollidingBall() {
-		for (let ball of Ball.balls) {
-			if (ball != this) {
-				let dx = ball.x - this.x;
-				let dy = ball.y - this.y;
+	getOneCollidingBody(listOfBodies) {
+		for (let body of listOfBodies) {
+			if (body != this) {
+				let dx = body.x - this.x;
+				let dy = body.y - this.y;
 				let dist = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
-				if (dist <= this.R + ball.R) {
-					return ball;
+				if (dist <= this.R + body.R) {
+					return body;
 				}
 			}
 		}
 		return null;
 	}
 
-	checkAndDoCollision() {
-		let ball = this.getOneCollidingBall();
-		if (ball != null) {
-			let dx = ball.x - this.x;
-			let dy = ball.y - this.y;
+	checkAndDoCollision(listOfBodies) {
+		let body = this.getOneCollidingBody(listOfBodies);
+		if (body != null) {
+			let dx = body.x - this.x;
+			let dy = body.y - this.y;
 			let normalVector = new Vector(dx, dy);
 			let unitNormal = normalVector.dividedBy(normalVector.getMagnitude());
 			let unitTangent = new Vector(-unitNormal.y, unitNormal.x);
 			let v1 = new Vector(this.vx, this.vy);
-			let v2 = new Vector(ball.vx, ball.vy);
+			let v2 = new Vector(body.vx, body.vy);
 
 			let v1normalScalar = Vector.dotProduct(unitNormal, v1);
 			let v1tangentScalar = Vector.dotProduct(unitTangent, v1);
@@ -302,8 +203,8 @@ class Ball {
 
 			let v1tangentScalarNew = v1tangentScalar;
 			let v2tangentScalarNew = v2tangentScalar;
-			let v1normalScalarNew = (v1normalScalar * (this.mass - ball.mass) + 2 * ball.mass * v2normalScalar) / (this.mass + ball.mass);
-			let v2normalScalarNew = (v2normalScalar * (ball.mass - this.mass) + 2 * this.mass * v1normalScalar) / (this.mass + ball.mass);
+			let v1normalScalarNew = (v1normalScalar * (this.mass - body.mass) + 2 * body.mass * v2normalScalar) / (this.mass + body.mass);
+			let v2normalScalarNew = (v2normalScalar * (body.mass - this.mass) + 2 * this.mass * v1normalScalar) / (this.mass + body.mass);
 
 			let v1normalVector = unitNormal.multipliedBy(v1normalScalarNew);
 			let v2normalVector = unitNormal.multipliedBy(v2normalScalarNew);
@@ -315,14 +216,110 @@ class Ball {
 
 			this.vx = v1New.x;
 			this.vy = v1New.y;
-			ball.vx = v2New.x;
-			ball.vy = v2New.y;
+			body.vx = v2New.x;
+			body.vy = v2New.y;
 
 			this.moveWithoutChecking();
-			ball.moveWithoutChecking();
-		} 
+			body.moveWithoutChecking();
+		}
 	}
 }
+
+
+
+
+
+class Planet extends CircleMovingObject {
+	static planets = [];  // Массив, содержащий все созданные планеты
+
+	constructor(x, y, vx, vy, mass, R) {
+		super(x, y, vx, vy, mass, R);
+		Planet.planets.push(this);
+	}
+
+	createSprite() {
+		this.sprite = createCircle({
+			R: this.R,
+			lineWidth: 3,
+		});
+		this.createText();
+	}
+
+	createText() {
+		this.textStyle = new PIXI.TextStyle({
+			fontFamily: "Arial",
+			fontSize: 16,
+  			fill: "white",
+		})
+		this.infoText = new PIXI.Text("", this.textStyle); 
+		app.stage.addChild(this.infoText);
+	}
+
+	setPos(x, y) {
+		super.setPos(x, y);
+		this.infoText.position.set(x + this.R, y - this.R);
+	}
+
+	move() {
+		this.calculateGravityWithOtherBodies(Planet.planets);
+		this.showInfo();	
+		super.move();
+	}
+
+	showInfo() {
+		this.infoText.text = `Vx: ${this.vx}\nVy: ${this.vy}\nMass: ${this.mass}\nRadius: ${this.R}`
+	}
+}
+
+
+
+
+class Rocket extends CircleMovingObject {
+	constructor(x, y, vx, vy) {
+		super(x, y, vx, vy, 1, 5);
+	}
+
+	createSprite() {
+		this.sprite = createCircle({
+			R: this.R,
+			fillColor: getRandomColor(),
+			lineWidth: 0,
+		})
+	}
+
+	move() {
+		this.calculateGravityWithOtherBodies(Planet.planets);
+		super.move();
+		//this.bounceOffEdges();
+	}
+}
+
+
+
+
+
+class Ball extends CircleMovingObject {
+	static balls = [];
+
+	constructor(x, y, vx, vy, mass, R) {
+		super(x, y, vx, vy, mass, R);
+		Ball.balls.push(this);
+	}
+
+	createSprite() {
+		this.sprite = createCircle({
+			R: this.R,
+			lineWidth: 1
+		});
+	}
+
+	move() {
+		this.checkAndDoCollision(Ball.balls);
+		super.move();
+	}
+}
+
+
 
 
 
@@ -405,15 +402,16 @@ class Button {
 
 
 
+
 function case1() {
 	clearStage();
-	new Planet(100, 100, 0, 0, 100);
-	new Planet(800, 800, 0, 0, 100);
+	new Planet(100, 100, 0, 0, 100, 100);
+	new Planet(800, 800, 0, 0, 100, 100);
 }
 
 function case2() {
 	clearStage();
-	new Planet(500, 500, 0, 0, 100);
+	new Planet(500, 500, 0, 0, 500, 100);
 	setInterval(func, 1)
 	function func() {
 		new Rocket(500, 300, randomFloatBetween(-3, 3), randomFloatBetween(0, 3));
@@ -440,10 +438,18 @@ function case4() {
 	new Ball(1200, 520, 0, 0, 100, 50);
 }
 
-
+function case5() {
+	clearStage();
+	new Planet(900, 500, 0, 0, 1000, 100);
+	setInterval(func, 1)
+	function func() {
+		new Rocket(randInt(100, 1800), randInt(100, 900), randomFloatBetween(-3, 3), randomFloatBetween(-3, 3));
+	}
+}
 
 new Button(100, 500, "Planets", case1);
 new Button(100, 600, "Asteroids", case2);
 new Button(100, 700, "Collision", case3);
 new Button(100, 800, "Billiard", case4);
+new Button(100, 900, "Random", case5);
 
