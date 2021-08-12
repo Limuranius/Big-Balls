@@ -7,6 +7,17 @@ const G = 6.67  // Гравитационная постоянная (Нахре
 const PLANET_PLANET_COLLISION = false;  // true - планеты будут отталкиваться друг от друга
 const ROCKET_PLANET_COLLISION = false;  // true - ракеты будут отталкиваться от планет
 const ROCKET_ROCKET_COLLISION = false;  //	true - ракеты будут отталкиваться друг от друга
+let keysPressed = {};
+
+window.addEventListener("keydown", keysDown);
+window.addEventListener("keyup", keysUp);
+function keysDown(e) {
+	console.log(e.keyCode)
+	keysPressed[e.keyCode] = true;
+}
+function keysUp(e) {
+	keysPressed[e.keyCode] = false;
+}
 
 
 function clearStage() {
@@ -85,6 +96,31 @@ function createRectangle(options) {
 	return rect;
 }
 
+
+function createTriangle(options) {
+	let defOpt = {  // defaultOptions
+		x: 0, 
+		y: 0, 
+		size: 50,
+		lineWidth: 1,
+		lineColor: 0xffffff,
+		lineAlpha: 1, 
+		fillColor: 0x000000,
+	}
+	Object.assign(defOpt, options);  // Заменяем аргументы по умолчанию на те, которые ввели
+	let points = [
+		0, defOpt.size / 2, 
+		defOpt.size, defOpt.size,
+		defOpt.size, 0
+	]
+	let triangle = new PIXI.Graphics();
+	triangle.lineStyle(defOpt.lineWidth, defOpt.lineColor, defOpt.lineAlpha);
+	triangle.beginFill(defOpt.fillColor);
+	triangle.drawPolygon(points);
+	triangle.endFill();
+	triangle.pivot.set(defOpt.size / 2, defOpt.size / 2);
+	return triangle;
+}
 
 
 
@@ -285,7 +321,7 @@ class Rocket extends CircleMovingObject {
 
 	constructor(x, y, vx, vy) {
 		super(x, y, vx, vy, 1, 5);
-		Rocket.rockets.push(this);
+		Rocket.allObjects.push(this);
 	}
 
 	createSprite() {
@@ -418,6 +454,112 @@ class Button {
 
 
 
+class Player extends MovingObject{
+	constructor(x, y) {
+		super(x, y, 0, 0, 1)
+		this.size = 20;
+		this.createSprite();
+		this.closestPlanet;
+		this.distToClosestPlanet;
+
+		this.movementSpeed = 3;  // Скорость передвижения игрока
+		this.jumpSpeed = 0.3;  // На сколько изменяется модуль скорости при прыжке (не совсем прыжок, т. к. надо зажимать пробел)
+		this.descendSpeed = 0.3;
+
+		app.stage.addChild(this.sprite);
+		app.ticker.add(this.move.bind(this));
+
+	}
+
+	createSprite() {
+		this.sprite = createTriangle({
+			lineColor: 0xff0000,
+			size: this.size,
+		});
+	}
+
+	move() {
+		this.calculateGravityWithOtherBodies(Planet.allObjects);
+		this.turnToClosestPlanet();
+		super.move();
+		this.checkKeysPressed();
+	}
+
+	turnToClosestPlanet() {
+		let res = this.findClosestPlanetAndDist();
+		this.closestPlanet = res[0];
+		this.distToClosestPlanet = res[1];
+		let angle = Math.atan2(this.closestPlanet.y - this.y, this.closestPlanet.x - this.x);
+		this.sprite.rotation = angle;
+		if (this.distToClosestPlanet <= this.size / 2 + this.closestPlanet.R) {
+			this.vx = this.closestPlanet.vx;
+			this.vy = this.closestPlanet.vy;
+		}
+	}
+
+	findClosestPlanetAndDist() {
+		let minDistSquared = Infinity;
+		let resPlanet = null;
+		for (let planet of Planet.allObjects) {
+			let dx = planet.x - this.x;
+			let dy = planet.y - this.y;
+			let distSquared = Math.pow(dx, 2) + Math.pow(dy, 2);
+			if (distSquared < minDistSquared) {
+				minDistSquared = distSquared;
+				resPlanet = planet;
+			}
+		}
+		return [resPlanet, Math.sqrt(minDistSquared)];
+	}
+
+	checkKeysPressed() {
+		let dx = this.closestPlanet.x - this.x;
+		let dy = this.closestPlanet.y - this.y;
+		let radiusVector = new Vector(dx, dy);  // Вектор, идущий от центра планеты до игрока. Нужен, чтобы вычислить перпендикулярный ему вектор
+		let unitRadiusVector = radiusVector.dividedBy(this.distToClosestPlanet);  // Единичный вектор
+		let unitTangentVector = new Vector(-unitRadiusVector.y, unitRadiusVector.x);  // Единичный вектор
+		
+		let DescendVector = unitRadiusVector.multipliedBy(this.descendSpeed);
+		let JumpVector = unitRadiusVector.multipliedBy(this.jumpSpeed);  // Вектор прыжка от центра планеты 
+		let MovementVector = unitTangentVector.multipliedBy(this.movementSpeed);  // Вектор движения игрока по касательной к поверхности планеты
+
+		// W
+		if (keysPressed["87"]) {
+			//this.setY(this.y - 5);
+		}
+		
+		// S
+		if (keysPressed["83"]) {
+			this.vx += DescendVector.x;
+			this.vy += DescendVector.y;
+		}
+
+		// A
+		if (keysPressed["65"]) {
+			//this.setX(this.x - 5);
+			this.setX(this.x + MovementVector.x);
+			this.setY(this.y + MovementVector.y);
+		}
+
+		// D
+		if (keysPressed["68"]) {
+			//this.setX(this.x + 5);
+			this.setX(this.x - MovementVector.x);
+			this.setY(this.y - MovementVector.y);
+		}
+
+		// Space
+		if (keysPressed["32"]) {
+			this.vx -= JumpVector.x;
+			this.vy -= JumpVector.y;
+		}
+	}
+}
+
+
+
+
+
 function case1() {
 	clearStage();
 	new Planet(100, 100, 0, 0, 100, 100);
@@ -467,6 +609,7 @@ function case6() {
 	new Planet(900, 300, 2, 0, 500, 100);
 	new Planet(900, 700, -2, 0, 500, 100);
 	new Rocket(900, 500, 0, 0);
+	new Player(100, 100);
 }
 
 new Button(100, 200, "Planets", case1);
@@ -476,3 +619,12 @@ new Button(100, 500, "Billiard", case4);
 new Button(100, 600, "Random", case5);
 new Button(100, 700, "Orbitals", case6);
 
+
+let tr = createTriangle();
+tr.x = 50;
+tr.y = 50;
+function f() {
+	tr.rotation += 0.01;
+}
+app.ticker.add(f);
+app.stage.addChild(tr);
