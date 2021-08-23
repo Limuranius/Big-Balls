@@ -2,21 +2,39 @@ const app = new PIXI.Application({
 	resizeTo: window,
 });
 document.body.appendChild(app.view);
+app.stage.interactive = true;
+interactionManager = new PIXI.InteractionManager(app.renderer);
 
 const G = 6.67  // Гравитационная постоянная (Нахрена она нужна?)
 const PLANET_PLANET_COLLISION = false;  // true - планеты будут отталкиваться друг от друга
 const ROCKET_PLANET_COLLISION = false;  // true - ракеты будут отталкиваться от планет
 const ROCKET_ROCKET_COLLISION = false;  //	true - ракеты будут отталкиваться друг от друга
 let keysPressed = {};
+let mouseButtonsPressed = {};
+
+
+function getMousePos() {
+	return interactionManager.mouse.global;
+}
+
 
 window.addEventListener("keydown", keysDown);
 window.addEventListener("keyup", keysUp);
 function keysDown(e) {
-	console.log(e.keyCode)
+	//console.log(e.keyCode)
 	keysPressed[e.keyCode] = true;
 }
 function keysUp(e) {
 	keysPressed[e.keyCode] = false;
+}
+
+window.addEventListener("mousedown", mouseDown);
+window.addEventListener("mouseup", mouseUp);
+function mouseDown(e) {
+	mouseButtonsPressed[e.button] = true;
+}
+function mouseUp(e) {
+	mouseButtonsPressed[e.button] = false;
 }
 
 
@@ -51,6 +69,11 @@ function getRandomColor() {
 
 function radiansToDegrees(radians) {
 	return radians / Math.PI * 180;
+}
+
+
+function findDistance(dx, dy) {
+	return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
 }
 
 
@@ -458,14 +481,36 @@ class Player extends MovingObject{
 	constructor(x, y) {
 		super(x, y, 0, 0, 1)
 		this.size = 20;
+		this.landed = false;
 		this.createSprite();
-		this.closestPlanet;
-		this.distToClosestPlanet;
 
+		this.closestPlanet = {
+			object: undefined,
+			dx: undefined,
+			dy: undefined,
+			distToCenter: undefined,
+			unitRadiusVector: undefined,  // Единичный вектор, направленный от центра планеты до игрока.
+			unitTangentVector: undefined, // Единичный вектор, перпендикулярный предыдущему, то есть идёт по касательной к поверхности планеты
+		};
+
+		this.gun = {
+			sprite: createRectangle({
+				width: 10,
+				height: 5,
+				fillColor: 0x0000ff,
+			}),
+			unitPlayerMouseVector: undefined,
+			x: undefined,
+			y: undefined,
+		}
+		this.gun.sprite.pivot.set(5, 2.5);
+		this.bulletSpeed = 7;
+		this.gunHoldDistance = 10; // Насколько далеко от себя держит оружие
 		this.movementSpeed = 3;  // Скорость передвижения игрока
-		this.jumpSpeed = 0.3;  // На сколько изменяется модуль скорости при прыжке (не совсем прыжок, т. к. надо зажимать пробел)
+		this.jumpSpeed = 5;  // На сколько изменяется модуль скорости при прыжке
 		this.descendSpeed = 0.3;
 
+		app.stage.addChild(this.gun.sprite);
 		app.stage.addChild(this.sprite);
 		app.ticker.add(this.move.bind(this));
 
@@ -480,24 +525,40 @@ class Player extends MovingObject{
 
 	move() {
 		this.calculateGravityWithOtherBodies(Planet.allObjects);
+
+		this.findClosestPlanet();
+		this.closestPlanet.dx = this.x - this.closestPlanet.object.x;
+		this.closestPlanet.dy = this.y - this.closestPlanet.object.y;
+		this.closestPlanet.radiusVector = new Vector(this.closestPlanet.dx, this.closestPlanet.dy);
+		this.closestPlanet.unitRadiusVector = this.closestPlanet.radiusVector.dividedBy(this.closestPlanet.distToCenter);
+		this.closestPlanet.unitTangentVector = new Vector(-this.closestPlanet.unitRadiusVector.y, this.closestPlanet.unitRadiusVector.x);
+		this.closestPlanet.distVector = this.closestPlanet.unitRadiusVector.multipliedBy(this.closestPlanet.object.R + this.size / 2); // Вектор, который идёт от центра планеты до центра игрока, если бы он стоял на поверхности (сумма радиуса планеты и высоты игрока)
+
 		this.turnToClosestPlanet();
+		this.bounceOffClosestPlanet();
 		super.move();
 		this.checkKeysPressed();
+
+		this.moveGun();
 	}
 
 	turnToClosestPlanet() {
-		let res = this.findClosestPlanetAndDist();
-		this.closestPlanet = res[0];
-		this.distToClosestPlanet = res[1];
-		let angle = Math.atan2(this.closestPlanet.y - this.y, this.closestPlanet.x - this.x);
+		let angle = Math.atan2(-this.closestPlanet.dy, -this.closestPlanet.dx);
 		this.sprite.rotation = angle;
-		if (this.distToClosestPlanet <= this.size / 2 + this.closestPlanet.R) {
-			this.vx = this.closestPlanet.vx;
-			this.vy = this.closestPlanet.vy;
+	}
+
+	bounceOffClosestPlanet() {
+		if (this.closestPlanet.distToCenter < this.size / 2 + this.closestPlanet.object.R) {
+			this.landed = true;
+
+			this.vx = this.closestPlanet.object.vx;
+			this.vy = this.closestPlanet.object.vy;
+			this.setX(this.closestPlanet.object.x + this.closestPlanet.distVector.x);
+			this.setY(this.closestPlanet.object.y + this.closestPlanet.distVector.y);
 		}
 	}
 
-	findClosestPlanetAndDist() {
+	findClosestPlanet() {
 		let minDistSquared = Infinity;
 		let resPlanet = null;
 		for (let planet of Planet.allObjects) {
@@ -509,19 +570,15 @@ class Player extends MovingObject{
 				resPlanet = planet;
 			}
 		}
-		return [resPlanet, Math.sqrt(minDistSquared)];
+		
+		this.closestPlanet.object = resPlanet;
+		this.closestPlanet.distToCenter = Math.sqrt(minDistSquared);
 	}
 
 	checkKeysPressed() {
-		let dx = this.closestPlanet.x - this.x;
-		let dy = this.closestPlanet.y - this.y;
-		let radiusVector = new Vector(dx, dy);  // Вектор, идущий от центра планеты до игрока. Нужен, чтобы вычислить перпендикулярный ему вектор
-		let unitRadiusVector = radiusVector.dividedBy(this.distToClosestPlanet);  // Единичный вектор
-		let unitTangentVector = new Vector(-unitRadiusVector.y, unitRadiusVector.x);  // Единичный вектор
-		
-		let DescendVector = unitRadiusVector.multipliedBy(this.descendSpeed);
-		let JumpVector = unitRadiusVector.multipliedBy(this.jumpSpeed);  // Вектор прыжка от центра планеты 
-		let MovementVector = unitTangentVector.multipliedBy(this.movementSpeed);  // Вектор движения игрока по касательной к поверхности планеты
+		let DescendVector = this.closestPlanet.unitRadiusVector.multipliedBy(this.descendSpeed);
+		let JumpVector = this.closestPlanet.unitRadiusVector.multipliedBy(this.jumpSpeed);  // Вектор прыжка от центра планеты 
+		let MovementVector = this.closestPlanet.unitTangentVector.multipliedBy(this.movementSpeed);  // Вектор движения игрока по касательной к поверхности планеты
 
 		// W
 		if (keysPressed["87"]) {
@@ -530,29 +587,88 @@ class Player extends MovingObject{
 		
 		// S
 		if (keysPressed["83"]) {
-			this.vx += DescendVector.x;
-			this.vy += DescendVector.y;
+			this.vx -= DescendVector.x;
+			this.vy -= DescendVector.y;
 		}
 
 		// A
 		if (keysPressed["65"]) {
 			//this.setX(this.x - 5);
-			this.setX(this.x + MovementVector.x);
-			this.setY(this.y + MovementVector.y);
+			if (this.landed) {
+				this.setX(this.x - MovementVector.x);
+				this.setY(this.y - MovementVector.y);
+			}
 		}
 
 		// D
 		if (keysPressed["68"]) {
 			//this.setX(this.x + 5);
-			this.setX(this.x - MovementVector.x);
-			this.setY(this.y - MovementVector.y);
+			if (this.landed) {
+				this.setX(this.x + MovementVector.x);
+				this.setY(this.y + MovementVector.y);
+			}
 		}
 
 		// Space
-		if (keysPressed["32"]) {
-			this.vx -= JumpVector.x;
-			this.vy -= JumpVector.y;
+		if (keysPressed["32"] && this.landed) {
+			this.landed = false;
+			this.vx += JumpVector.x;
+			this.vy += JumpVector.y;
 		}
+
+		// LMB
+		if (mouseButtonsPressed["0"]) {
+			if (this.gun.unitPlayerMouseVector) {  // Если вектор был высчитан хоть раз
+				this.shoot();
+			}
+		}
+	}
+
+	moveGun() {
+		let mousePos = getMousePos();
+		let mouseX = mousePos.x;
+		let mouseY = mousePos.y;
+		let dx = mouseX - this.x;
+		let dy = mouseY - this.y;
+		let playerMouseVector = new Vector(dx, dy);
+		let unitPlayerMouseVector = playerMouseVector.dividedBy(findDistance(dx, dy));
+		this.gun.unitPlayerMouseVector = unitPlayerMouseVector;
+		let playerGunVector = unitPlayerMouseVector.multipliedBy(this.gunHoldDistance);
+		let angle = Math.atan2(dy, dx);
+
+		this.gun.x = this.x + playerGunVector.x;
+		this.gun.y = this.y + playerGunVector.y;
+		this.gun.sprite.x = this.x + playerGunVector.x;
+		this.gun.sprite.y = this.y + playerGunVector.y;
+		this.gun.sprite.rotation = angle;
+	}
+
+	shoot() {
+		let bulletVector = this.gun.unitPlayerMouseVector.multipliedBy(this.bulletSpeed);
+		new Bullet(this.gun.x, this.gun.y, bulletVector.x, bulletVector.y);
+	}
+}
+
+
+
+
+
+class Bullet extends CircleMovingObject {
+	constructor(x, y, vx, vy) {
+		super(x, y, vx, vy, 1, 3);
+	}
+
+	createSprite() {
+		this.sprite = createCircle({
+			R: this.R,
+			fillColor: 0xffff00,
+			lineWidth: 0,
+		})
+	}
+
+	move() {
+		this.calculateGravityWithOtherBodies(Planet.allObjects);
+		super.move();
 	}
 }
 
