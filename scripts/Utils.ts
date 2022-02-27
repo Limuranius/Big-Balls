@@ -7,6 +7,7 @@ export function randomFloatBetween(a: number, b: number): number {
 
 
 export function randInt(a: number, b: number): number {
+    // [a : b)
     let diff = b - a;
     return a + Math.floor(Math.random() * diff)
 }
@@ -38,6 +39,7 @@ interface IGeometry {
     lineColor?: number,
     lineAlpha?: number,
     fillColor?: number,
+    alignment?: number,
 }
 
 interface ICircle extends IGeometry {
@@ -53,10 +55,11 @@ export function createCircle(
         lineColor = 0xffffff,
         lineAlpha = 1,
         fillColor = 0x000000,
+        alignment = 0.5,
     }: ICircle) {
 
     let circle = new PIXI.Graphics();
-    circle.lineStyle(lineWidth, lineColor, lineAlpha);
+    circle.lineStyle(lineWidth, lineColor, lineAlpha, alignment);
     circle.beginFill(fillColor);
     circle.drawCircle(x, y, R);
     circle.endFill();
@@ -78,10 +81,11 @@ export function createRectangle(
         lineColor = 0xffffff,
         lineAlpha = 1,
         fillColor = 0x000000,
+        alignment = 0.5,
     }: IRectangle) {
 
     let rect = new PIXI.Graphics();
-    rect.lineStyle(lineWidth, lineColor, lineAlpha);
+    rect.lineStyle(lineWidth, lineColor, lineAlpha, alignment);
     rect.beginFill(fillColor);
     rect.drawRect(x, y, width, height);
     rect.endFill();
@@ -101,6 +105,7 @@ export function createTriangle(
         lineColor = 0xffffff,
         lineAlpha = 1,
         fillColor = 0x000000,
+        alignment = 0.5,
     }: ITriangle) {
 
     let points = [
@@ -109,7 +114,7 @@ export function createTriangle(
         size, 0
     ]
     let triangle = new PIXI.Graphics();
-    triangle.lineStyle(lineWidth, lineColor, lineAlpha);
+    triangle.lineStyle(lineWidth, lineColor, lineAlpha, alignment);
     triangle.beginFill(fillColor);
     triangle.drawPolygon(points);
     triangle.endFill();

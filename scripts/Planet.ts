@@ -5,7 +5,6 @@ import GameManager from "./GameManager";
 
 
 export default class Planet extends CircleMovingObject {
-    static allObjects: Array<Planet> = [];  // Массив, содержащий все созданные планеты
     textStyle: PIXI.TextStyle;
     infoText: PIXI.Text;
 
@@ -20,13 +19,14 @@ export default class Planet extends CircleMovingObject {
         this.infoText = new PIXI.Text("", this.textStyle);
         this.app.stage.addChild(this.infoText);
 
-        Planet.allObjects.push(this);
+        this.gm.objects.Planets.push(this);
     }
 
     createSprite() {
         this.sprite = createCircle({
             R: this.R,
             lineWidth: 3,
+            alignment: 0,
         });
     }
 
@@ -36,15 +36,24 @@ export default class Planet extends CircleMovingObject {
     }
 
     move() {
-        this.calculateGravityWithOtherBodies(Planet.allObjects);
-        this.showInfo();
+        this.calculateGravityWithOtherBodies(this.gm.objects.Planets);
+        this.updateInfo();
         if (this.gm.options.PLANET_PLANET_COLLISION) {
-            this.checkAndDoCollision(Planet.allObjects);
+            this.checkAndDoCollision(this.gm.objects.Planets);
         }
         super.move();
     }
 
-    showInfo() {
-        this.infoText.text = `Velocity: ${findDistance(this.vx, this.vy).toFixed(2)}\nMass: ${this.mass}\nRadius: ${this.R}`
+    updateInfo() {
+        let vel = `Velocity: ${findDistance(this.vx, this.vy).toFixed(10)}\n`;
+        let mass = `Mass: ${this.mass.toFixed(0)}\n`
+        let radius = `Radius: ${this.R.toFixed(2)}`
+        this.infoText.text = vel + mass + radius
+    }
+
+    remove() {
+        super.remove();
+        let index = this.gm.objects.Planets.indexOf(this);
+        this.gm.objects.Planets.splice(index, 1)
     }
 }

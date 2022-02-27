@@ -4,7 +4,8 @@ export {default as Ball} from "./Ball"
 export {default as Button} from "./Button"
 export * from "./Constants"
 export {default as Planet} from "./Planet"
-export {default as Rocket} from "./Rocket"
+export {default as Rocket} from "./Asteroid"
 export * from "./Utils"
+export {default as FPSCounter} from "./FPSCounter"
 
 

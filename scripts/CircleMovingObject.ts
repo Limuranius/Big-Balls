@@ -1,17 +1,19 @@
 import MovingObject from "./MovingObject";
 import Vector from "./Vector";
-import * as PIXI from "pixi.js";
 import GameManager from "./GameManager";
 
 export default abstract class CircleMovingObject extends MovingObject {
     R: number;
+    tickerFunc: () => void;
 
     protected constructor(gm: GameManager, x: number, y: number, vx: number, vy: number, mass: number, R: number) {
         super(gm, x, y, vx, vy, mass);
         this.R = R;
         this.createSprite();
         this.app.stage.addChild(this.sprite);
-        this.app.ticker.add(this.move.bind(this));
+
+        this.tickerFunc = this.move.bind(this)
+        this.app.ticker.add(this.tickerFunc);
     }
 
     abstract createSprite(): void;
@@ -33,6 +35,7 @@ export default abstract class CircleMovingObject extends MovingObject {
     checkAndDoCollision(listOfBodies: Array<CircleMovingObject>): void {
         let body = this.getOneCollidingBody(listOfBodies);
         if (body != null) {
+            this.remove()
             let dx = body.x - this.x;
             let dy = body.y - this.y;
             let normalVector = new Vector(dx, dy);
@@ -67,5 +70,10 @@ export default abstract class CircleMovingObject extends MovingObject {
             this.moveWithoutChecking();
             body.moveWithoutChecking();
         }
+    }
+
+    remove(): void {
+        this.gm.app.ticker.remove(this.tickerFunc)
+        this.gm.app.stage.removeChild(this.sprite)
     }
 }

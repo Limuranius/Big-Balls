@@ -42,10 +42,15 @@ export default abstract class MovingObject {
 
     move(): void {
         this.setPos(this.x + this.vx, this.y + this.vy);
+        this.sprite.renderable = this.isSeen()
     }
 
     moveWithoutChecking(): void {
         this.setPos(this.x + this.vx, this.y + this.vy);
+    }
+
+    isSeen(): boolean {
+        return (0 < this.x) && (this.x < this.app.view.width) && (0 < this.y) && (this.y < this.app.view.width)
     }
 
     bounceOffEdges() {
@@ -82,4 +87,6 @@ export default abstract class MovingObject {
             }
         }
     }
+
+    abstract remove(): void;
 }

@@ -1,7 +1,5 @@
 import CircleMovingObject from "./CircleMovingObject";
 import {createCircle} from "./Utils";
-import Planet from "./Planet";
-import * as PIXI from "pixi.js"
 import GameManager from "./GameManager";
 
 export default class Bullet extends CircleMovingObject {
@@ -18,7 +16,7 @@ export default class Bullet extends CircleMovingObject {
     }
 
     move(): void {
-        this.calculateGravityWithOtherBodies(Planet.allObjects);
+        this.calculateGravityWithOtherBodies(this.gm.objects.Planets);
         super.move();
     }
 }
