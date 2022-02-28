@@ -32,7 +32,11 @@ export default class Planet extends CircleMovingObject {
 
     setPos(x: number, y: number) {
         super.setPos(x, y);
-        this.infoText.position.set(x + this.R, y - this.R);
+        // this.infoText.position.set(x + this.R, y - this.R);
+        this.infoText.scale.set(this.gm.camera.scale, this.gm.camera.scale)
+
+        this.infoText.x = (x + this.R) * this.gm.camera.scale - this.gm.camera.x;
+        this.infoText.y = (y - this.R) * this.gm.camera.scale - this.gm.camera.y;
     }
 
     move() {

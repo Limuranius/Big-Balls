@@ -19,9 +19,9 @@
   },
   "homepage": "https://github.com/Limuranius/Big-Balls#readme",
   "dependencies": {
-    "pixi.js": "^6.2.2",
-    "pixi.js-keyboard": "^1.1.6",
-    "pixi.js-mouse": "^1.1.6"
+    "@pixi/math-extras": "^6.2.2",
+    "pixi-keyboard": "^1.0.0",
+    "pixi.js": "^6.2.2"
   },
   "devDependencies": {
     "tsc-watch": "^4.6.0",

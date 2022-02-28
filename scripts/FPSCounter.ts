@@ -43,7 +43,8 @@ export default class FPSCounter {
 
     update() {
         let fps = `FPS: ${this.gm.app.ticker.FPS.toFixed(0)}\n`;
-        let tickerCount = `TickerCount: ${this.gm.app.ticker.count}`;
-        this.text.text = fps + tickerCount
+        let asteroids_count = `Asteroids: ${this.gm.objects.Asteroids.length}\n`
+        let planets_count = `Planets: ${this.gm.objects.Planets.length}\n`
+        this.text.text = fps + asteroids_count + planets_count
     }
 }

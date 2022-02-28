@@ -15,10 +15,11 @@ function createFlagButtons(gm: GameManager) {
 
     function option2() {
         gm.clearStage();
+
         let planet = new Planet(gm, 500, 500, 0, 0, 5e13, 50);
         let height = 300
 
-        for (let i = 0; i < 5000; i++) {
+        for (let i = 0; i < 1500; i++) {
             setTimeout(() => {
                 let vx = randomFloatBetween(-10, 10) * 0.6
                 new Rocket(gm, planet.x, planet.y + height, vx, 0)

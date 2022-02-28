@@ -24,8 +24,10 @@ export default abstract class MovingObject {
     }
 
     setPos(x: number, y: number): void {
-        this.sprite.x = x;
-        this.sprite.y = y;
+        this.sprite.scale.set(this.gm.camera.scale, this.gm.camera.scale)
+
+        this.sprite.x = x * this.gm.camera.scale - this.gm.camera.x;
+        this.sprite.y = y * this.gm.camera.scale - this.gm.camera.y;
         this.x = x;
         this.y = y;
     }
@@ -50,7 +52,10 @@ export default abstract class MovingObject {
     }
 
     isSeen(): boolean {
-        return (0 < this.x) && (this.x < this.app.view.width) && (0 < this.y) && (this.y < this.app.view.width)
+        return (0 < this.sprite.x) &&
+            (this.sprite.x < this.app.view.width) &&
+            (0 < this.sprite.y) &&
+            (this.sprite.y < this.app.view.width)
     }
 
     bounceOffEdges() {
