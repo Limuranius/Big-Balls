@@ -1,10 +1,92 @@
-// import MovingObject from "./MovingObject";
-// import Planet from "./Planet";
-// import Bullet from "./Bullet";
-// import Vector from "./Vector";
-// import {createRectangle, createTriangle, findDistance} from "./Utils";
-// import * as PIXI from "pixi.js";
-// import GameManager from "./GameManager";
+import MovingObject from "./MovingObject";
+import {createRectangle, createTriangle, findDistance} from "./Utils";
+import * as PIXI from "pixi.js";
+import "@pixi/math-extras"
+import GameManager from "./GameManager";
+
+export default class Player extends MovingObject {
+    pos: PIXI.Point
+    movementSpeed: PIXI.Point
+    acceleration: number
+    bulletSpeed: number
+
+    gun: {
+        sprite: PIXI.Sprite | PIXI.Graphics,
+        direction: PIXI.Point
+    }
+
+    constructor(gm: GameManager, x: number, y: number, vx: number, vy: number) {
+        super(gm, x, y, vx, vy, 1);
+        this.pos = new PIXI.Point(x, y)
+        this.movementSpeed = new PIXI.Point(vx, vy)
+        this.acceleration = 1
+        this.bulletSpeed = 5
+        this.gun = {
+            sprite: new PIXI.Graphics(),
+            direction: new PIXI.Point()
+        }
+        this.setup()
+    }
+
+    setup() {
+        this.setSprites()
+    }
+
+    updateLoop() {
+        super.updateLoop();
+        this.angleGun()
+        this.checkKeys()
+
+        this.x = this.pos.x
+        this.y = this.pos.y
+    }
+
+    checkKeys() {
+        if (this.gm.keysPressed["KeyW"]) {
+            this.pos = this.pos.subtract(this.getDirectionVector())
+        }
+        if (this.gm.keysPressed["KeyA"]) {
+            this.sprite.angle -= 1
+        }
+        if (this.gm.keysPressed["KeyS"]) {
+            this.pos = this.pos.add(this.getDirectionVector())
+        }
+        if (this.gm.keysPressed["KeyD"]) {
+            this.sprite.angle += 1
+        }
+    }
+
+    angleGun(): void {
+        let gunGlobalPos = this.gun.sprite.toGlobal(this.gm.app.stage)
+        let gunDirectionVector = this.gm.getPointToMouseVector(gunGlobalPos)
+        this.gun.sprite.rotation = Math.atan2(gunDirectionVector.y, gunDirectionVector.x) + Math.PI
+    }
+
+    getDirectionVector(): PIXI.Point {
+        let dx = Math.cos(this.sprite.rotation) * this.acceleration
+        let dy = Math.sin(this.sprite.rotation) * this.acceleration
+        return new PIXI.Point(dx, dy)
+    }
+
+    private setSprites() {
+        this.sprite = createTriangle({
+            size: 30,
+        })
+        this.gun.sprite = createRectangle({
+            width: 10,
+            height: 5,
+            fillColor: 0x0000ff,
+            alignment: 0,
+            anchorY: 0.5,
+            anchorX: 0.2,
+        })
+        this.sprite.addChild(this.gun.sprite)
+        this.gun.sprite.position.set(this.sprite.width * 0.7, this.sprite.height * 0.5)
+
+        this.gm.app.stage.addChild(this.sprite)
+    }
+}
+
 //
 // export default class Player extends MovingObject {
 //     gm: GameManager;

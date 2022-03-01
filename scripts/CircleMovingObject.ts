@@ -4,16 +4,12 @@ import GameManager from "./GameManager";
 
 export default abstract class CircleMovingObject extends MovingObject {
     R: number;
-    tickerFunc: () => void;
 
     protected constructor(gm: GameManager, x: number, y: number, vx: number, vy: number, mass: number, R: number) {
         super(gm, x, y, vx, vy, mass);
         this.R = R;
         this.createSprite();
         this.app.stage.addChild(this.sprite);
-
-        this.tickerFunc = this.move.bind(this)
-        this.app.ticker.add(this.tickerFunc);
     }
 
     abstract createSprite(): void;
@@ -70,10 +66,5 @@ export default abstract class CircleMovingObject extends MovingObject {
             this.moveWithoutChecking();
             body.moveWithoutChecking();
         }
-    }
-
-    remove(): void {
-        this.gm.app.ticker.remove(this.tickerFunc)
-        this.gm.app.stage.removeChild(this.sprite)
     }
 }

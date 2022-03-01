@@ -69,6 +69,8 @@ export function createCircle(
 interface IRectangle extends IGeometry {
     width?: number,
     height?: number,
+    anchorX?: number,
+    anchorY?: number,
 }
 
 export function createRectangle(
@@ -82,7 +84,13 @@ export function createRectangle(
         lineAlpha = 1,
         fillColor = 0x000000,
         alignment = 0.5,
+        anchorX = 0,
+        anchorY = 0,
     }: IRectangle) {
+
+    // Смещаем координаты, чтобы anchor был в точке (0, 0)
+    x = -width * anchorX
+    y = -height * anchorY
 
     let rect = new PIXI.Graphics();
     rect.lineStyle(lineWidth, lineColor, lineAlpha, alignment);

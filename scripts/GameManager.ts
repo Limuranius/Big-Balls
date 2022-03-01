@@ -13,10 +13,9 @@ export default class GameManager {
     FPSCounter: FPSCounter
 
     camera: {
-        x: number,
-        y: number,
         scale: number,
         scaleIncreaseFactor: number,
+        pos: PIXI.Point
     }
     oldMousePos: PIXI.Point
 
@@ -34,10 +33,9 @@ export default class GameManager {
 
     constructor() {
         this.camera = {
-            x: 0,
-            y: 0,
-            scale: 1,
-            scaleIncreaseFactor: 1.1
+            scale: 1,  // Сколько пикселей занимает координатная единица
+            scaleIncreaseFactor: 1.1,
+            pos: new PIXI.Point(0, 0)
         }
         this.oldMousePos = new PIXI.Point(0, 0)
 
@@ -71,26 +69,25 @@ export default class GameManager {
 
     checkKeys(): void {
         if (this.keysPressed["ArrowUp"]) {
-            this.camera.y -= 3
+            this.camera.pos.y -= 3
         }
         if (this.keysPressed["ArrowDown"]) {
-            this.camera.y += 3
+            this.camera.pos.y += 3
         }
         if (this.keysPressed["ArrowLeft"]) {
-            this.camera.x -= 3
+            this.camera.pos.x -= 3
         }
         if (this.keysPressed["ArrowRight"]) {
-            this.camera.x += 3
+            this.camera.pos.x += 3
         }
 
         if (this.mouseButtonsPressed[0]) {
             let currMousePos = this.getMousePos()
             let dPos = currMousePos.subtract(this.oldMousePos)
             this.oldMousePos = currMousePos.clone()
-            console.log(dPos)
 
-            this.camera.x -= dPos.x
-            this.camera.y -= dPos.y
+            this.camera.pos.x -= dPos.x
+            this.camera.pos.y -= dPos.y
         }
     }
 
@@ -110,15 +107,15 @@ export default class GameManager {
         });
 
         window.onwheel = (ev) => {
-            let sceneCenterMouseVector = this.getSceneCenterToMouse()
-            if (ev.deltaY > 0) {
+            let cursorPos = this.getSceneCenterToMouse()
+            if (ev.deltaY > 0) {  // scroll down | zoom out
+                let dPos = cursorPos.multiplyScalar(1 - (1 / this.camera.scaleIncreaseFactor))
                 this.camera.scale /= this.camera.scaleIncreaseFactor
-                this.camera.x -= sceneCenterMouseVector.x * (this.camera.scaleIncreaseFactor - 1)
-                this.camera.y -= sceneCenterMouseVector.y * (this.camera.scaleIncreaseFactor - 1)
-            } else {
+                this.camera.pos = this.camera.pos.subtract(dPos)
+            } else {  // scroll up | zoom in
+                let dPos = cursorPos.multiplyScalar(this.camera.scaleIncreaseFactor - 1)
                 this.camera.scale *= this.camera.scaleIncreaseFactor
-                this.camera.x += sceneCenterMouseVector.x * (this.camera.scaleIncreaseFactor - 1)
-                this.camera.y += sceneCenterMouseVector.y * (this.camera.scaleIncreaseFactor - 1)
+                this.camera.pos = this.camera.pos.add(dPos)
             }
         }
 
@@ -129,11 +126,16 @@ export default class GameManager {
         return this.interactionManager.mouse.global;
     }
 
+    getPointToMouseVector(point: PIXI.Point): PIXI.Point {
+        let mousePos = this.getMousePos()
+        return point.subtract(mousePos)
+    }
+
     getSceneCenterToMouse(): PIXI.Point {
         // Получить вектор от центра app.scene до положения мыши
         let mousePos = this.getMousePos()
-        let sceneCenterPos = new PIXI.Point(this.camera.x, this.camera.y)  // Центр сцены определяется положением камеры
-        return mousePos.add(sceneCenterPos)  // Хз, почему +, а не -
+        let sceneCenterPos = new PIXI.Point(-this.camera.pos.x, -this.camera.pos.y)  // Центр сцены определяется положением камеры
+        return mousePos.subtract(sceneCenterPos)
     }
 
     clearStage(): void {

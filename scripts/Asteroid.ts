@@ -1,5 +1,5 @@
 import CircleMovingObject from "./CircleMovingObject";
-import {createCircle, getRandomColor} from "./Utils";
+import {createCircle} from "./Utils";
 import GameManager from "./GameManager";
 
 export default class Asteroid extends CircleMovingObject {
@@ -11,7 +11,7 @@ export default class Asteroid extends CircleMovingObject {
     createSprite() {
         this.sprite = createCircle({
             R: this.R,
-            fillColor: getRandomColor(),
+            fillColor: 0x4e03fc,// getRandomColor(),
             lineWidth: 0,
         })
     }

@@ -27,6 +27,7 @@ export default class Planet extends CircleMovingObject {
             R: this.R,
             lineWidth: 3,
             alignment: 0,
+            fillColor: 0x999999,
         });
     }
 
@@ -35,8 +36,8 @@ export default class Planet extends CircleMovingObject {
         // this.infoText.position.set(x + this.R, y - this.R);
         this.infoText.scale.set(this.gm.camera.scale, this.gm.camera.scale)
 
-        this.infoText.x = (x + this.R) * this.gm.camera.scale - this.gm.camera.x;
-        this.infoText.y = (y - this.R) * this.gm.camera.scale - this.gm.camera.y;
+        this.infoText.x = (x + this.R) * this.gm.camera.scale - this.gm.camera.pos.x;
+        this.infoText.y = (y - this.R) * this.gm.camera.scale - this.gm.camera.pos.y;
     }
 
     move() {

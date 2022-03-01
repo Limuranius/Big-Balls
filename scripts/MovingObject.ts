@@ -11,6 +11,7 @@ export default abstract class MovingObject {
     vy: number;
     mass: number;
     sprite: PIXI.Sprite | PIXI.Graphics
+    tickerFunc: () => void
 
     protected constructor(gm: GameManager, x: number, y: number, vx: number, vy: number, mass: number) {
         this.gm = gm
@@ -21,13 +22,30 @@ export default abstract class MovingObject {
         this.vy = vy;
         this.mass = mass;
         this.sprite = new PIXI.Sprite()
+
+        // Добавляем объект в игровой цикл
+        this.tickerFunc = this.updateLoop.bind(this)  // По этой переменной потом можно будет удалить объект
+        this.gm.app.ticker.add(this.tickerFunc)
+    }
+
+    updateLoop() {
+        this.move()
+    }
+
+    move(): void {
+        this.setPos(this.x + this.vx, this.y + this.vy);
+        this.sprite.renderable = this.isSeen()
+    }
+
+    moveWithoutChecking(): void {
+        this.setPos(this.x + this.vx, this.y + this.vy);
     }
 
     setPos(x: number, y: number): void {
         this.sprite.scale.set(this.gm.camera.scale, this.gm.camera.scale)
 
-        this.sprite.x = x * this.gm.camera.scale - this.gm.camera.x;
-        this.sprite.y = y * this.gm.camera.scale - this.gm.camera.y;
+        this.sprite.x = x * this.gm.camera.scale - this.gm.camera.pos.x;
+        this.sprite.y = y * this.gm.camera.scale - this.gm.camera.pos.y;
         this.x = x;
         this.y = y;
     }
@@ -40,15 +58,6 @@ export default abstract class MovingObject {
     setY(y: number): void {
         this.y = y;
         this.sprite.y = y;
-    }
-
-    move(): void {
-        this.setPos(this.x + this.vx, this.y + this.vy);
-        this.sprite.renderable = this.isSeen()
-    }
-
-    moveWithoutChecking(): void {
-        this.setPos(this.x + this.vx, this.y + this.vy);
     }
 
     isSeen(): boolean {
@@ -93,5 +102,8 @@ export default abstract class MovingObject {
         }
     }
 
-    abstract remove(): void;
+    remove(): void {
+        this.gm.app.ticker.remove(this.tickerFunc)
+        this.gm.app.stage.removeChild(this.sprite)
+    }
 }
