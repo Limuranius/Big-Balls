@@ -1,5 +1,5 @@
 import CircleMovingObject from "./CircleMovingObject";
-import {createCircle, findDistance} from "./Utils";
+import {createCircle} from "./Utils";
 import * as PIXI from "pixi.js"
 import GameManager from "./GameManager";
 
@@ -50,7 +50,7 @@ export default class Planet extends CircleMovingObject {
     }
 
     updateInfo() {
-        let vel = `Velocity: ${findDistance(this.vx, this.vy).toFixed(10)}\n`;
+        let vel = `Velocity: ${this.velocity.magnitude().toFixed(10)}\n`;
         let mass = `Mass: ${this.mass.toFixed(0)}\n`
         let radius = `Radius: ${this.R.toFixed(2)}`
         this.infoText.text = vel + mass + radius

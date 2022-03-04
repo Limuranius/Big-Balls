@@ -1,5 +1,5 @@
 import MovingObject from "./MovingObject";
-import {createRectangle, createTriangle, findDistance} from "./Utils";
+import {createRectangle, createTriangle} from "./Utils";
 import * as PIXI from "pixi.js";
 import "@pixi/math-extras"
 import GameManager from "./GameManager";
@@ -19,7 +19,7 @@ export default class Player extends MovingObject {
         super(gm, x, y, vx, vy, 1);
         this.pos = new PIXI.Point(x, y)
         this.movementSpeed = new PIXI.Point(vx, vy)
-        this.acceleration = 1
+        this.acceleration = 0.1
         this.bulletSpeed = 5
         this.gun = {
             sprite: new PIXI.Graphics(),
@@ -36,20 +36,19 @@ export default class Player extends MovingObject {
         super.updateLoop();
         this.angleGun()
         this.checkKeys()
-
-        this.x = this.pos.x
-        this.y = this.pos.y
+        this.calculateGravityWithOtherBodies(this.gm.objects.Planets)
+        console.log(this.velocity)
     }
 
     checkKeys() {
         if (this.gm.keysPressed["KeyW"]) {
-            this.pos = this.pos.subtract(this.getDirectionVector())
+            this.velocity = this.velocity.subtract(this.getDirectionVector())
         }
         if (this.gm.keysPressed["KeyA"]) {
             this.sprite.angle -= 1
         }
         if (this.gm.keysPressed["KeyS"]) {
-            this.pos = this.pos.add(this.getDirectionVector())
+            this.velocity = this.velocity.add(this.getDirectionVector())
         }
         if (this.gm.keysPressed["KeyD"]) {
             this.sprite.angle += 1

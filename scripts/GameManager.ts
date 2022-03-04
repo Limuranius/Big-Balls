@@ -4,6 +4,7 @@ import Asteroid from "./Asteroid";
 import Planet from "./Planet";
 import Ball from "./Ball";
 import "@pixi/math-extras"
+import Camera from "./Camera";
 
 export default class GameManager {
     readonly app: PIXI.Application;
@@ -12,11 +13,7 @@ export default class GameManager {
     mouseButtonsPressed: { [button: number]: boolean }
     FPSCounter: FPSCounter
 
-    camera: {
-        scale: number,
-        scaleIncreaseFactor: number,
-        pos: PIXI.Point
-    }
+    camera: Camera
     oldMousePos: PIXI.Point
 
     options: {
@@ -32,39 +29,33 @@ export default class GameManager {
     }
 
     constructor() {
-        this.camera = {
-            scale: 1,  // Сколько пикселей занимает координатная единица
-            scaleIncreaseFactor: 1.1,
-            pos: new PIXI.Point(0, 0)
-        }
         this.oldMousePos = new PIXI.Point(0, 0)
-
         this.options = {
             PLANET_PLANET_COLLISION: false,  // true - планеты будут отталкиваться друг от друга
             ASTEROID_PLANET_COLLISION: false,  // true - ракеты будут отталкиваться от планет
             ASTEROID_ASTEROID_COLLISION: false,  //	true - ракеты будут отталкиваться друг от друга
         }
-
         this.objects = {
             Planets: [],
             Asteroids: [],
             Balls: [],
         }
-
         this.app = new PIXI.Application({
             resizeTo: window,
         })
+        this.interactionManager = new PIXI.InteractionManager(this.app.renderer)
+        this.keysPressed = {};
+        this.mouseButtonsPressed = {};
+        this.FPSCounter = new FPSCounter(this, "top-left")
+        this.camera = new Camera(this)
+        this.addKeyListeners()
+        this.setup()
+    }
+
+    setup() {
         document.body.appendChild(this.app.view);
         this.app.stage.interactive = true;
         this.app.ticker.maxFPS = 0;
-        this.interactionManager = new PIXI.InteractionManager(this.app.renderer)
-
-        // Присваиваем клавишам клавиатуры и мыши свои действия
-        this.keysPressed = {};
-        this.mouseButtonsPressed = {};
-        this.addKeyListeners()
-
-        this.FPSCounter = new FPSCounter(this, "top-left")
     }
 
     checkKeys(): void {
@@ -86,8 +77,7 @@ export default class GameManager {
             let dPos = currMousePos.subtract(this.oldMousePos)
             this.oldMousePos = currMousePos.clone()
 
-            this.camera.pos.x -= dPos.x
-            this.camera.pos.y -= dPos.y
+            this.camera.pos = this.camera.pos.subtract(dPos)
         }
     }
 

@@ -19,16 +19,16 @@ function createFlagButtons(gm: GameManager) {
 
         new Ball(gm, 0, 0, 0, 0, 0, 20)
 
-        new Player(gm, 100, 100, 0, 0)
+        gm.camera.setFocus(new Player(gm, 100, 100, 0, 0))
 
         let planet = new Planet(gm, 500, 500, 0, 0, 5e13, 50);
         let height = 300
 
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 1000; i++) {
             setTimeout(() => {
                 let vx = randomFloatBetween(-10, 10) * 0.6
-                new Rocket(gm, planet.x, planet.y + height, vx, 0)
-                new Rocket(gm, planet.x, planet.y - height, vx, 0)
+                new Rocket(gm, planet.pos.x, planet.pos.y + height, vx, 0)
+                // new Rocket(gm, planet.pos.x, planet.pos.y - height, vx, 0)
             }, i * 3)
         }
 
