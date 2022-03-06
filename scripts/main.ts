@@ -4,14 +4,14 @@ import {
     randomFloatBetween, randInt,
     EARTH_MASS, EARTH_RADIUS, MOON_MASS, MOON_RADIUS, EARTH_MOON_DIST,
 } from "./index";
-import Player from "./Player";
+// import Player from "./Player";
 
 
 function createFlagButtons(gm: GameManager) {
     function option1() {
         gm.clearStage();
-        new Planet(gm, 100, 100, 0, 0, 5e12, 100);
-        new Planet(gm, 800, 800, 0, 0, 5e12, 100);
+        new Planet(gm, 100, 100, 5, 0, 5e13, 100);
+        new Planet(gm, 800, 800, 0, 0, 5e13, 100);
     }
 
     function option2() {
@@ -19,7 +19,7 @@ function createFlagButtons(gm: GameManager) {
 
         new Ball(gm, 0, 0, 0, 0, 0, 20)
 
-        gm.camera.setFocus(new Player(gm, 100, 100, 0, 0))
+        // gm.camera.setFocus(new Player(gm, 100, 100, 0, 0))
 
         let planet = new Planet(gm, 500, 500, 0, 0, 5e13, 50);
         let height = 300
@@ -27,9 +27,9 @@ function createFlagButtons(gm: GameManager) {
         for (let i = 0; i < 1000; i++) {
             setTimeout(() => {
                 let vx = randomFloatBetween(-10, 10) * 0.6
-                new Rocket(gm, planet.pos.x, planet.pos.y + height, vx, 0)
+                new Rocket(gm, planet.body.position.x, planet.body.position.y + height, vx, 0)
                 // new Rocket(gm, planet.pos.x, planet.pos.y - height, vx, 0)
-            }, i * 3)
+            }, i * 5)
         }
 
         // for (let i = 0; i < 50000; i++) {

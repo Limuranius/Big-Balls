@@ -33,8 +33,6 @@ export function findDistance(dx: number, dy: number): number {
 }
 
 interface IGeometry {
-    x?: number,
-    y?: number,
     lineWidth?: number,
     lineColor?: number,
     lineAlpha?: number,
@@ -48,8 +46,6 @@ interface ICircle extends IGeometry {
 
 export function createCircle(
     {
-        x = 0,
-        y = 0,
         R = 20,
         lineWidth = 1,
         lineColor = 0xffffff,
@@ -61,7 +57,7 @@ export function createCircle(
     let circle = new PIXI.Graphics();
     circle.lineStyle(lineWidth, lineColor, lineAlpha, alignment);
     circle.beginFill(fillColor);
-    circle.drawCircle(x, y, R);
+    circle.drawCircle(0, 0, R);
     circle.endFill();
     return circle;
 }
@@ -69,14 +65,12 @@ export function createCircle(
 interface IRectangle extends IGeometry {
     width?: number,
     height?: number,
-    anchorX?: number,
-    anchorY?: number,
+    pivotX?: number,
+    pivotY?: number,
 }
 
 export function createRectangle(
     {
-        x = 0,
-        y = 0,
         width = 100,
         height = 20,
         lineWidth = 1,
@@ -84,18 +78,15 @@ export function createRectangle(
         lineAlpha = 1,
         fillColor = 0x000000,
         alignment = 0.5,
-        anchorX = 0,
-        anchorY = 0,
+        pivotX = 0,
+        pivotY = 0,
     }: IRectangle) {
-
-    // Смещаем координаты, чтобы anchor был в точке (0, 0)
-    x = -width * anchorX
-    y = -height * anchorY
 
     let rect = new PIXI.Graphics();
     rect.lineStyle(lineWidth, lineColor, lineAlpha, alignment);
     rect.beginFill(fillColor);
-    rect.drawRect(x, y, width, height);
+    rect.drawRect(0, 0, width, height);
+    rect.pivot.set(pivotX, pivotY)
     rect.endFill();
     return rect;
 }
@@ -106,8 +97,6 @@ interface ITriangle extends IGeometry {
 
 export function createTriangle(
     {
-        x = 0,
-        y = 0,
         size = 50,
         lineWidth = 1,
         lineColor = 0xffffff,

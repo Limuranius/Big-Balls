@@ -20,8 +20,11 @@
   "homepage": "https://github.com/Limuranius/Big-Balls#readme",
   "dependencies": {
     "@pixi/math-extras": "^6.2.2",
+    "@types/matter-js": "^0.17.7",
+    "matter-js": "^0.18.0",
     "pixi-keyboard": "^1.0.0",
-    "pixi.js": "^6.2.2"
+    "pixi.js": "^6.2.2",
+    "poly-decomp": "^0.3.0"
   },
   "devDependencies": {
     "tsc-watch": "^4.6.0",

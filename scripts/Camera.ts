@@ -32,7 +32,9 @@ export default class Camera {
         if (this.target != null) {
             let width = this.gm.app.view.width
             let height = this.gm.app.view.height
-            this.pos = this.coordsToPixels(this.target.pos).subtract(new PIXI.Point(width / 2, height / 2))
+            let targetPos = new PIXI.Point(this.target.body.position.x, this.target.body.position.y)
+            this.pos = this.coordsToPixels(targetPos).subtract(new PIXI.Point(width / 2, height / 2))
+
         }
     }
 

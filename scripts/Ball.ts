@@ -1,6 +1,7 @@
 import CircleMovingObject from "./CircleMovingObject";
 import {createCircle} from "./Utils";
 import GameManager from "./GameManager";
+import * as PIXI from "pixi.js";
 
 export default class Ball extends CircleMovingObject {
     constructor(gm: GameManager, x: number, y: number, vx: number, vy: number, mass: number, R: number) {
@@ -8,16 +9,11 @@ export default class Ball extends CircleMovingObject {
         gm.objects.Balls.push(this);
     }
 
-    createSprite(): void {
-        this.sprite = createCircle({
+    createSprite(): PIXI.Sprite | PIXI.Graphics {
+        return createCircle({
             R: this.R,
             lineWidth: 1
         });
-    }
-
-    move(): void {
-        this.checkAndDoCollision(this.gm.objects.Balls);
-        super.move();
     }
 
     remove() {

@@ -1,31 +1,27 @@
 import CircleMovingObject from "./CircleMovingObject";
 import {createCircle} from "./Utils";
 import GameManager from "./GameManager";
+import * as PIXI from "pixi.js";
+import Matter from "matter-js";
 
 export default class Asteroid extends CircleMovingObject {
     constructor(gm: GameManager, x: number, y: number, vx: number, vy: number) {
         super(gm, x, y, vx, vy, 1, 3);
         this.gm.objects.Asteroids.push(this);
+        console.log(this.body.mass)
     }
 
-    createSprite() {
-        this.sprite = createCircle({
+    gameLoop() {
+        super.gameLoop();
+        this.calculateGravityWithOtherBodies(this.gm.objects.Planets)
+    }
+
+    createSprite(): PIXI.Sprite | PIXI.Graphics {
+        return createCircle({
             R: this.R,
             fillColor: 0x4e03fc,// getRandomColor(),
             lineWidth: 0,
         })
-    }
-
-    move() {
-        this.calculateGravityWithOtherBodies(this.gm.objects.Planets);
-        super.move();
-        if (this.gm.options.ASTEROID_ASTEROID_COLLISION) {
-            this.checkAndDoCollision(this.gm.objects.Asteroids);
-        }
-        if (this.gm.options.ASTEROID_PLANET_COLLISION) {
-            this.checkAndDoCollision(this.gm.objects.Planets);
-        }
-        //this.bounceOffEdges();
     }
 
     remove() {

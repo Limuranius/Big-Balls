@@ -5,10 +5,15 @@ import Planet from "./Planet";
 import Ball from "./Ball";
 import "@pixi/math-extras"
 import Camera from "./Camera";
+import Matter, {Engine} from "matter-js";
+
+let decomp = require("poly-decomp")     // Добавляем разбиение полигонов для физического движка
+Matter.Common.setDecomp(decomp)         //
 
 export default class GameManager {
     readonly app: PIXI.Application;
     readonly interactionManager: PIXI.InteractionManager;
+    readonly engine: Matter.Engine
     keysPressed: { [key: string]: boolean }
     mouseButtonsPressed: { [button: number]: boolean }
     FPSCounter: FPSCounter
@@ -29,6 +34,15 @@ export default class GameManager {
     }
 
     constructor() {
+        this.app = new PIXI.Application({
+            resizeTo: window,
+        })
+        this.interactionManager = new PIXI.InteractionManager(this.app.renderer)
+        this.engine = Engine.create()
+        this.keysPressed = {};
+        this.mouseButtonsPressed = {};
+        this.FPSCounter = new FPSCounter(this, "top-left")
+        this.camera = new Camera(this)
         this.oldMousePos = new PIXI.Point(0, 0)
         this.options = {
             PLANET_PLANET_COLLISION: false,  // true - планеты будут отталкиваться друг от друга
@@ -40,14 +54,6 @@ export default class GameManager {
             Asteroids: [],
             Balls: [],
         }
-        this.app = new PIXI.Application({
-            resizeTo: window,
-        })
-        this.interactionManager = new PIXI.InteractionManager(this.app.renderer)
-        this.keysPressed = {};
-        this.mouseButtonsPressed = {};
-        this.FPSCounter = new FPSCounter(this, "top-left")
-        this.camera = new Camera(this)
         this.addKeyListeners()
         this.setup()
     }
@@ -56,6 +62,15 @@ export default class GameManager {
         document.body.appendChild(this.app.view);
         this.app.stage.interactive = true;
         this.app.ticker.maxFPS = 0;
+
+        this.engine.gravity.y = 0
+        // this.engine.positionIterations = 1
+        // this.engine.velocityIterations = 1
+
+        let func = () => {
+            Matter.Engine.update(this.engine)
+        }
+        this.app.ticker.add(func.bind(this))
     }
 
     checkKeys(): void {
